@@ -53,6 +53,9 @@ budget-ios/
 
 ## 二、在 Mac 上跑起来
 
+> **没有 Mac 硬件？** 看第七节「云 Mac / GitHub Actions」——不用买也不用借，
+> 在云端编译出 .ipa，拿回 Windows 用 AltStore 签名安装。
+
 ### 路线 A：用 XcodeGen（一条命令，推荐）
 
 需要联网装一次 XcodeGen：
@@ -203,7 +206,82 @@ iPhone 14 支持到 iOS 18，正常都在这个版本之上。
 
 ---
 
-## 七、这个版本没有的东西
+## 七、云 Mac / GitHub Actions（不用买也不用借 Mac）
+
+### 关键：云 Mac 接不到你的 iPhone
+
+Xcode 要把 App 装进手机，需要**通过 USB 看见设备**——免费 Apple ID 的自动签名
+更是要靠设备连着才能注册 UDID、生成描述文件。云 Mac 在机房里，USB 过不去。
+
+所以云 Mac **不能**直接 Run 到你的手机。它的正确用法是**只负责编译**：
+
+```
+① 云 Mac：xcodebuild 编译出【未签名】的 .ipa      ← 不需要连手机
+        ↓  下载 .ipa
+② Windows + AltStore + 数据线连 iPhone：签名 + 安装  ← 这一步本地做
+```
+
+第 ② 步之所以能在 Windows 做，是因为 **AltStore / Sideloadly 自己会调苹果的接口**
+完成签名和设备注册，不需要 Xcode。
+
+### 路线 1：GitHub Actions（免费，推荐）
+
+公开仓库的 **macOS 运行器不要钱**。工作流我已经写好了：
+`.github/workflows/build-ipa.yml`
+
+```bash
+# 1. 在 GitHub 建一个仓库，把这个目录推上去
+cd budget-ios
+git remote add origin https://github.com/你的用户名/budget-ios.git
+git push -u origin master
+
+# 2. 浏览器打开仓库 → Actions 标签页
+#    → 左侧选 "Build unsigned IPA" → 右侧 Run workflow
+
+# 3. 等 3~5 分钟，页面底部 Artifacts 下载
+#    BudgetAssistant-unsigned-ipa.zip
+```
+
+如果编译报错，日志会直接显示在 Actions 页面里——**把红字发我，我改**。
+
+### 路线 2：租一台云 Mac（要图形界面时）
+
+按小时计费的云 Mac（MacinCloud、MacStadium、AWS EC2 Mac 等，几美元/小时）。
+连上去之后：
+
+```bash
+cd budget-ios
+bash scripts/build-unsigned-ipa.sh
+```
+
+这个脚本也是我写好的，会：检查 Xcode → 用 XcodeGen 生成工程 → 编译（不签名）
+→ 打包成 `dist/BudgetAssistant-unsigned.ipa`。
+
+> 云 Mac 上装 Xcode 比较慢（几个 GB），租之前先确认机器上已经装好。
+> 如果只是要编译，GitHub Actions 更快也更省事。
+
+### 回到 Windows 装进 iPhone
+
+1. 下载 [AltServer](https://altstore.io/)（Windows 版），iPhone 上装 AltStore
+2. iPhone 用数据线连上电脑
+3. AltStore 里用你的 **免费 Apple ID** 登录
+4. 把下载来的 `.ipa` 拖进 AltStore → 它会自动签名并安装
+5. iPhone 上：**设置 → 通用 → VPN与设备管理 → 信任**
+
+装好后 7 天要重签一次（AltStore 会提醒，同一个 Wi-Fi 下能自动续）。
+
+### ⚠️ 这条链子上还没被验证的两点
+
+1. **AltStore 能否接受完全未签名的 ipa** —— 它的本职就是重签名，理论上可以，
+   但没实测过。**不行的话换 Sideloadly 试**（同为免费的 Windows 侧载工具）。
+2. **小组件可能装不上** —— 组件要靠 App Groups 与主 App 共享数据，
+   免费 Apple ID 给不给这个权限不确定。
+   **建议第一次先只编译主 App**（把 project.yml 里 BudgetWidget 的
+   `dependencies` 和 target 注释掉），成功之后再试着加回小组件。
+
+---
+
+## 八、这个版本没有的东西
 
 - 悬浮球 / 常驻通知（iOS 系统限制，见上）
 - 快捷指令（Shortcuts）集成 —— 可以后续加，能实现「嘿 Siri，记一笔」

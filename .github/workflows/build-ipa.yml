@@ -1,0 +1,84 @@
+# 免费云 Mac：用 GitHub Actions 的 macOS 运行器编译出未签名的 .ipa
+#
+# 为什么能免费：公开仓库的 macOS 运行器不消耗额度。
+#   （私有仓库也有 2000 分钟/月的免费额度，够用很多次）
+#
+# 用法：
+#   1. 把 budget-ios 推到一个 GitHub 仓库
+#   2. Actions 标签页 → 左侧选 "Build unsigned IPA" → Run workflow
+#   3. 跑完在页面底部 Artifacts 里下载 BudgetAssistant-unsigned-ipa
+#   4. 解压得到 .ipa，回到 Windows 用 AltStore 签名安装
+#
+name: Build unsigned IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    # macos-15 自带较新的 Xcode；需要旧版可换成 macos-14
+    runs-on: macos-15
+    timeout-minutes: 40
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 查看环境
+        run: |
+          sw_vers
+          xcodebuild -version
+          xcode-select -p
+
+      - name: 安装 XcodeGen
+        run: brew install xcodegen
+
+      - name: 生成 Xcode 工程
+        run: xcodegen generate
+
+      - name: 编译（不签名）
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project BudgetAssistant.xcodeproj \
+            -scheme BudgetAssistant \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS="" \
+            build
+
+      - name: 打包成 .ipa
+        run: |
+          set -euo pipefail
+          APP="build/Build/Products/Release-iphoneos/BudgetAssistant.app"
+          test -d "$APP"
+          mkdir -p out/Payload
+          cp -R "$APP" out/Payload/
+          cd out
+          zip -qry BudgetAssistant-unsigned.ipa Payload
+          rm -rf Payload
+          ls -lh BudgetAssistant-unsigned.ipa
+          echo "--- 内含扩展 ---"
+          find "../$APP/PlugIns" -maxdepth 1 -name '*.appex' 2>/dev/null || echo "（无）"
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: BudgetAssistant-unsigned-ipa
+          path: out/BudgetAssistant-unsigned.ipa
+          if-no-files-found: error
+
+      - name: 编译失败时保存日志
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build/Logs
+          if-no-files-found: ignore

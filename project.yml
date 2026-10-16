@@ -21,7 +21,18 @@ settings:
     # 在 Xcode 里 Signing & Capabilities 选你的 Apple ID 团队，
     # 或在这里填：DEVELOPMENT_TEAM: XXXXXXXXXX
     DEVELOPMENT_TEAM: ""
-    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.4"
+
+# 显式声明 scheme —— 命令行 xcodebuild 和 GitHub Actions 都要靠它
+schemes:
+  BudgetAssistant:
+    build:
+      targets:
+        BudgetAssistant: all
+    run:
+      config: Debug
+    archive:
+      config: Release
 
 targets:
 
