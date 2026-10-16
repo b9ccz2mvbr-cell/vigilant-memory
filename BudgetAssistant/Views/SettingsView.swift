@@ -84,6 +84,32 @@ struct SettingsView: View {
                         .foregroundStyle(AppColor.ink3)
                         .padding(.top, 10)
 
+                    // ---- 其他消费的分类管理 ----
+                    NavigationLink {
+                        CategorySettingsView()
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("其他消费的分类")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(AppColor.ink)
+                                Text(CategoryStore.categories.joined(separator: " · "))
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(AppColor.ink3)
+                                    .lineLimit(2)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12))
+                                .foregroundStyle(AppColor.ink3)
+                        }
+                        .padding(14)
+                        .background(RoundedRectangle(cornerRadius: 16).fill(AppColor.card))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(AppColor.line, lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 14)
+
                     if let toast {
                         Text(toast)
                             .font(.system(size: 13))

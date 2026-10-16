@@ -26,6 +26,20 @@ struct BudgetRecord: Codable, Identifiable {
     var pool: Pool
     var status: RecordStatus
     var ts: Date
+
+    // ---- 以下是「其他池」专属的可选信息 ----
+    // 三个都是 Optional，所以**旧数据能直接解码**（缺字段 = nil），不用迁移。
+
+    /// 分类：饰品 / 零食 / 日用品 / 宠物用品 / 电子设备 / 家具 / 手动输入…
+    /// 列表在设置里可编辑，见 CategoryStore。
+    var category: String?
+
+    /// 备注
+    var note: String?
+
+    /// 图片文件名（图片本身存在 App Group 容器的 images/ 目录里，不塞进 JSON）
+    /// 可选 —— 不存图片完全没问题
+    var imageFile: String?
 }
 
 struct BudgetConfig: Codable {

@@ -68,17 +68,61 @@ final class BudgetStore: ObservableObject {
         persist()
     }
 
-    func addRecord(amount: Double, pool: Pool, status: RecordStatus, at date: Date = Date()) {
-        records.append(BudgetRecord(amount: amount, pool: pool, status: status, ts: date))
+    /// 记一笔。
+    ///
+    /// `category` / `note` / `imageFile` 只对**其他池**有意义，都是可选的：
+    /// 不传图、不写备注完全没问题。
+    func addRecord(amount: Double,
+                   pool: Pool,
+                   status: RecordStatus,
+                   at date: Date = Date(),
+                   category: String? = nil,
+                   note: String? = nil,
+                   imageFile: String? = nil) {
+        var r = BudgetRecord(amount: amount, pool: pool, status: status, ts: date)
+        if pool == .other {
+            r.category = category?.isEmpty == true ? nil : category
+            r.note = note?.isEmpty == true ? nil : note
+            r.imageFile = imageFile
+        }
+        records.append(r)
         persist()
     }
 
     func deleteRecord(id: UUID) {
+        if let img = records.first(where: { $0.id == id })?.imageFile {
+            ImageStore.delete(img)      // 顺手把图删掉，别留孤儿文件
+        }
         records.removeAll { $0.id == id }
         persist()
     }
 
+    /// 更新某条记录的分类 / 备注 / 图片
+    func updateRecord(id: UUID,
+                      category: String? = nil,
+                      note: String? = nil,
+                      imageFile: String? = nil) {
+        guard let i = records.firstIndex(where: { $0.id == id }) else { return }
+        records[i].category = category?.isEmpty == true ? nil : category
+        records[i].note = note?.isEmpty == true ? nil : note
+        records[i].imageFile = imageFile
+        persist()
+    }
+
+    /// 某个分类在本周期内花了多少（给统计用）
+    func spent(inCategory category: String, from: Date, to: Date) -> Double {
+        records.reduce(0) { acc, r in
+            guard r.pool == .other, r.status == .bought, r.category == category else { return acc }
+            guard r.ts >= from, r.ts < to else { return acc }
+            return acc + r.amount
+        }
+    }
+
     func clearAll() {
+        // 先删图片再清数据
+        for name in records.compactMap({ $0.imageFile }) {
+            ImageStore.delete(name)
+        }
         config = nil
         records = []
         defaults.removeObject(forKey: kConfig)
