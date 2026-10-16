@@ -43,10 +43,8 @@ targets:
     sources:
       - path: BudgetAssistant
       - path: Shared
-    info:
-      path: BudgetAssistant/Info.plist
-      properties:
-        CFBundleDisplayName: 预算助手
+    # 不用 XcodeGen 的 info: 块 —— 它会重新生成 Info.plist，
+    # 把我们手写的键（UILaunchScreen 等）丢掉。直接指定文件。
     entitlements:
       path: BudgetAssistant/BudgetAssistant.entitlements
       properties:
@@ -56,6 +54,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.budget
         GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: BudgetAssistant/Info.plist
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"
@@ -74,8 +73,10 @@ targets:
     sources:
       - path: BudgetWidget
       - path: Shared
-    info:
-      path: BudgetWidget/Info.plist
+    # 关键：不要用 XcodeGen 的 info: 块。它会**重新生成** Info.plist，
+    # 把我们手写的 NSExtension 字典丢掉 —— iOS 会因此报
+    # "extensionDictionary must be set in placeholder attributes"。
+    # 改成只用 INFOPLIST_FILE 指向仓库里这份手写文件。
     entitlements:
       path: BudgetWidget/BudgetWidget.entitlements
       properties:
