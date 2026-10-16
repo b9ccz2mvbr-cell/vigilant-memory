@@ -1,0 +1,81 @@
+# XcodeGen 配置：一条命令生成 Xcode 工程
+#
+#   brew install xcodegen      # 只需一次
+#   cd budget-ios && xcodegen generate
+#
+# 如果不想装 XcodeGen，也可以照着 README.md 里的「手动建工程」步骤做。
+
+name: BudgetAssistant
+
+options:
+  bundleIdPrefix: com.example
+  deploymentTarget:
+    iOS: "16.4"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Automatic
+    # 在 Xcode 里 Signing & Capabilities 选你的 Apple ID 团队，
+    # 或在这里填：DEVELOPMENT_TEAM: XXXXXXXXXX
+    DEVELOPMENT_TEAM: ""
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+
+targets:
+
+  # ---------------- 主 App ----------------
+  BudgetAssistant:
+    type: application
+    platform: iOS
+    sources:
+      - path: BudgetAssistant
+      - path: Shared
+    info:
+      path: BudgetAssistant/Info.plist
+      properties:
+        CFBundleDisplayName: 预算助手
+    entitlements:
+      path: BudgetAssistant/BudgetAssistant.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.example.budget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.budget
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
+    dependencies:
+      # 主 App 内嵌小组件扩展
+      - target: BudgetWidget
+        embed: true
+
+  # ---------------- 小组件扩展 ----------------
+  BudgetWidget:
+    type: app-extension
+    platform: iOS
+    # 小组件用 containerBackground(for: .widget)，这是 iOS 17+ 的 API。
+    # 如果 iPhone 还停在 iOS 16，把下面这行删掉并改用手写背景（见 README 第五节）。
+    deploymentTarget: "17.0"
+    sources:
+      - path: BudgetWidget
+      - path: Shared
+    info:
+      path: BudgetWidget/Info.plist
+      properties:
+        CFBundleDisplayName: 预算余额
+    entitlements:
+      path: BudgetWidget/BudgetWidget.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.example.budget
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.budget.widget
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1"
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "1"
