@@ -1,146 +1,292 @@
 import SwiftUI
 
-/// 规格 5.10 调整额度：改月度总额 / 单日预算 / 每月起始日。
-/// 改完只影响之后的计算，已有记录不动。
-struct SettingsView: View {
+/// ?? 5.6 ????
+struct CalendarView: View {
     @EnvironmentObject var store: BudgetStore
     @Environment(\.dismiss) private var dismiss
 
-    @State private var monthly = ""
-    @State private var daily = ""
-    @State private var anchor = 1
-    @State private var toast: String?
+    enum Scope: String, CaseIterable {
+        case all = "??", daily = "??", other = "??"
+    }
 
-    private let anchors = [1, 5, 10, 15, 20, 25]
+    @State private var year: Int = Calendar.current.component(.year, from: Date())
+    @State private var month: Int = Calendar.current.component(.month, from: Date())
+    @State private var scope: Scope = .all
+    @State private var selectedDay: DaySelection?
 
-    private var days: Int { BudgetClock.daysInPeriod(Date(), monthStartDay: anchor) }
-    private var monthlyValue: Double { Money.parse(monthly) ?? 0 }
-    private var dailyValue: Double { Money.parse(daily) ?? 0 }
-    private var invalid: Bool { monthlyValue > 0 && dailyValue * Double(days) > monthlyValue }
+    private let weekdays = ["?", "?", "?", "?", "?", "?", "?"]
+
+    private var byDay: [Date: (daily: Double, other: Double, list: [BudgetRecord])] {
+        store.groupByDay()
+    }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    Text("月度总额")
-                        .font(.system(size: 15, weight: .bold))
-                        .padding(.top, 16)
-                    bigField("3000", $monthly)
+                    Kicker(text: "Calendar").padding(.top, 8)
 
-                    Text("日常开支（单日预算）")
-                        .font(.system(size: 15, weight: .bold))
-                        .padding(.top, 18)
-                    bigField("50", $daily)
+                    monthHeader.padding(.top, 14)
+                    scopePicker.padding(.top, 16)
+                    legend.padding(.top, 14)
+                    weekdayRow.padding(.top, 16)
+                    grid.padding(.top, 4)
+                    summary.padding(.top, 18)
 
-                    Text("每月起始日")
-                        .font(.system(size: 15, weight: .bold))
-                        .padding(.top, 18)
-
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 3),
-                              spacing: 6) {
-                        ForEach(anchors, id: \.self) { d in
-                            let active = anchor == d
-                            Button { anchor = d } label: {
-                                Text("\(d) 号")
-                                    .font(.system(size: 13, weight: active ? .bold : .regular))
-                                    .foregroundStyle(active ? AppColor.onBrand : AppColor.ink3)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 42)
-                                    .background(
-                                        Group {
-                                            if active {
-                                                RoundedRectangle(cornerRadius: 13)
-                                                    .fill(LinearGradient(colors: [AppColor.brandHi, AppColor.brandDark],
-                                                                         startPoint: .top, endPoint: .bottom))
-                                            } else {
-                                                RoundedRectangle(cornerRadius: 13).fill(AppColor.card)
-                                            }
-                                        }
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 13)
-                                            .stroke(active ? .clear : AppColor.line, lineWidth: 1)
-                                    )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    .padding(.top, 10)
-
-                    Text("按起始日 \(anchor) 号算，本周期 \(days) 天 · 预估合计 \(Money.format(dailyValue * Double(days)))")
-                        .font(.system(size: 13))
-                        .foregroundStyle(AppColor.ink3)
-                        .padding(.top, 16)
-
-                    if invalid {
-                        Text("单日预算 × 本周期天数 不能超过月度总额")
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppColor.danger)
-                            .padding(.top, 8)
-                    }
-
-                    Text("改完只影响之后的计算，已有记录不会被删除。")
+                    Text("???? ? ?????????????")
                         .font(.system(size: 12))
                         .foregroundStyle(AppColor.ink3)
-                        .padding(.top, 10)
-
-                    if let toast {
-                        Text(toast)
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppColor.ink)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(Capsule().fill(AppColor.surface))
-                            .padding(.top, 12)
-                    }
-
-                    HStack(spacing: 10) {
-                        GhostButton(label: "取消") { dismiss() }
-                        PrimaryButton(label: "保存") { save() }
-                    }
-                    .padding(.top, 26)
+                        .padding(.top, 16)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 30)
             }
-            .background(GlowBackground())
-            .navigationTitle("调整额度")
+            .background(GlowBackground().ignoresSafeArea())
+            .navigationTitle("??")
             .navigationBarTitleDisplayMode(.inline)
-        }
-        .onAppear {
-            monthly = trim(store.config?.monthlyTotal ?? 0)
-            daily = trim(store.config?.dailyBudget ?? 0)
-            anchor = store.config?.monthStartDay ?? 1
-        }
-    }
-
-    private func bigField(_ placeholder: String, _ binding: Binding<String>) -> some View {
-        TextField(placeholder, text: binding)
-            .keyboardType(.decimalPad)
-            .font(.system(size: 30, weight: .bold))
-            .foregroundStyle(AppColor.ink)
-            .padding(.top, 8)
-            .overlay(alignment: .bottom) {
-                Rectangle().fill(AppColor.line).frame(height: 2)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("??") { dismiss() }
+                        .foregroundStyle(AppColor.brand)
+                }
             }
-    }
-
-    private func save() {
-        guard let m = Money.parse(monthly), m > 0 else { return flash("请填写月度总额") }
-        guard let d = Money.parse(daily), d > 0 else { return flash("请填写单日预算") }
-        guard d * Double(days) <= m else {
-            return flash("单日预算 × 本周期天数 不能超过月度总额")
         }
-        store.saveConfig(BudgetConfig(monthlyTotal: m, dailyBudget: d, monthStartDay: anchor))
-        dismiss()
+        .sheet(item: $selectedDay) { sel in
+            DaySheet(dayKey: sel.key).environmentObject(store)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(.clear)
+        }
     }
 
-    private func trim(_ v: Double) -> String {
-        v == v.rounded() ? "\(Int(v))" : "\(v)"
+    // MARK: - ????
+
+    private var monthHeader: some View {
+        HStack {
+            navButton("<") { shift(-1) }
+            Spacer()
+            Text("\(year) ? \(month) ?")
+                .font(.system(size: 19, weight: .bold))
+                .foregroundStyle(AppColor.ink)
+            Spacer()
+            navButton(">") { shift(1) }
+        }
     }
 
-    private func flash(_ msg: String) {
-        toast = msg
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { toast = nil }
+    private func navButton(_ label: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 20))
+                .foregroundStyle(AppColor.ink2)
+                .frame(width: 42, height: 42)
+                .background(RoundedRectangle(cornerRadius: 13).fill(AppColor.cardHi))
+                .overlay(RoundedRectangle(cornerRadius: 13).stroke(AppColor.line, lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
+
+    private func shift(_ delta: Int) {
+        var m = month + delta
+        var y = year
+        if m < 1 { m = 12; y -= 1 }
+        if m > 12 { m = 1; y += 1 }
+        month = m
+        year = y
+    }
+
+    // MARK: - ????
+
+    private var scopePicker: some View {
+        HStack(spacing: 6) {
+            ForEach(Scope.allCases, id: \.self) { s in
+                let active = scope == s
+                Button { scope = s } label: {
+                    Text(s.rawValue)
+                        .font(.system(size: 13, weight: active ? .bold : .regular))
+                        .foregroundStyle(active ? AppColor.onBrand : AppColor.ink3)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 38)
+                        .background(
+                            Group {
+                                if active {
+                                    RoundedRectangle(cornerRadius: 11)
+                                        .fill(LinearGradient(colors: [AppColor.brandHi, AppColor.brandDark],
+                                                             startPoint: .top, endPoint: .bottom))
+                                } else {
+                                    RoundedRectangle(cornerRadius: 11).fill(AppColor.card)
+                                }
+                            }
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 11)
+                                .stroke(active ? .clear : AppColor.line, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - ??
+
+    private var legend: some View {
+        HStack(spacing: 12) {
+            legendItem(AppColor.brand.opacity(0.45), "???", circle: false)
+            legendItem(AppColor.danger, "????", circle: false)
+            legendItem(AppColor.accent2, "?????", circle: true)
+            Spacer()
+        }
+    }
+
+    private func legendItem(_ color: Color, _ label: String, circle: Bool) -> some View {
+        HStack(spacing: 5) {
+            Group {
+                if circle {
+                    Circle().fill(color).frame(width: 6, height: 6)
+                } else {
+                    RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 9, height: 9)
+                }
+            }
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(AppColor.ink3)
+        }
+    }
+
+    private var weekdayRow: some View {
+        HStack(spacing: 4) {
+            ForEach(weekdays, id: \.self) { w in
+                Text(w)
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppColor.ink3)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    // MARK: - ??
+
+    private var grid: some View {
+        let cal = Calendar.current
+        let firstOfMonth = cal.date(from: DateComponents(year: year, month: month, day: 1))!
+        let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)!.count
+        // ???????
+        let weekday = cal.component(.weekday, from: firstOfMonth) // 1=Sun
+        let lead = (weekday + 5) % 7
+        let todayKey = BudgetClock.dayStart(Date())
+        let budget = store.config?.dailyBudget ?? 0
+        let map = byDay
+
+        return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
+                         spacing: 4) {
+            ForEach(0..<lead, id: \.self) { i in
+                Color.clear.frame(height: 58).id("blank\(i)")
+            }
+            ForEach(1...daysInMonth, id: \.self) { d in
+                let key = cal.date(from: DateComponents(year: year, month: month, day: d, hour: BudgetClock.dayStartHour))!
+                let entry = map[key]
+                let daily = entry?.daily ?? 0
+                let other = entry?.other ?? 0
+                let total = daily + other
+                let shown: Double = scope == .all ? total : (scope == .daily ? daily : other)
+                let overspent = budget > 0 && daily > budget
+                let isToday = key == todayKey
+
+                Button { selectedDay = DaySelection(key: key) } label: {
+                    VStack(spacing: 1) {
+                        Text("\(d)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(overspent ? AppColor.danger : AppColor.ink2)
+                        Text(shown > 0 ? Money.short(shown) : " ")
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(overspent ? AppColor.danger
+                                                       : (total > 0 ? AppColor.brand : AppColor.ink3))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 58)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(overspent ? AppColor.danger.opacity(0.15)
+                                            : (total > 0 ? AppColor.brand.opacity(0.13) : Color.white.opacity(0.035)))
+                    )
+                    .overlay(alignment: .bottomTrailing) {
+                        if other > 0 {
+                            Circle().fill(AppColor.accent2)
+                                .frame(width: 5, height: 5)
+                                .padding(6)
+                        }
+                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isToday ? AppColor.brand
+                                            : (overspent ? AppColor.danger.opacity(0.45)
+                                                         : (total > 0 ? AppColor.brand.opacity(0.3) : .clear)),
+                                    lineWidth: isToday ? 2 : 1)
+                    )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
+    // MARK: - ????
+
+    private var summary: some View {
+        let cal = Calendar.current
+        let map = byDay
+        var spent = 0.0
+        var over = 0
+        var under = 0
+        let budget = store.config?.dailyBudget ?? 0
+
+        for (key, e) in map {
+            let c = cal.dateComponents([.year, .month], from: key)
+            guard c.year == year, c.month == month else { continue }
+            spent += e.daily + e.other
+            if budget > 0 {
+                if e.daily > budget { over += 1 } else if e.daily > 0 { under += 1 }
+            }
+        }
+
+        let quota = store.config?.monthlyTotal ?? 0
+        let left = quota - spent
+
+        return GlassCard {
+            VStack(spacing: 13) {
+                HStack(spacing: 10) {
+                    kv("????", Money.format(spent), .normal)
+                    kv("????", Money.format(quota), .normal)
+                }
+                HStack(spacing: 10) {
+                    kv("??", Money.format(left), left < 0 ? .negative : .normal)
+                    kv("?? / ???", "\(over) / \(under) ?", .normal)
+                }
+            }
+        }
+    }
+
+    private enum KVKind { case normal, negative }
+
+    private func kv(_ label: String, _ value: String, _ kind: KVKind) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(label)
+                .font(.system(size: 11))
+                .foregroundStyle(AppColor.ink3)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .foregroundStyle(kind == .negative ? AppColor.danger : AppColor.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// ????????? .sheet(item:)
+/// (?? Date ??,?? Swift ?????? @retroactive ???)
+struct DaySelection: Identifiable {
+    let key: Date
+    var id: Double { key.timeIntervalSince1970 }
 }

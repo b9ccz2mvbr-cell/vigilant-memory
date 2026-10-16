@@ -1,21 +1,29 @@
 import SwiftUI
 
-// 配色定义在 Shared/AppPalette.swift —— 小组件扩展也要用，
-// 而小组件 target 不包含本文件。
+// ????? Shared/AppPalette.swift -- ????????,
+// ???? target ???????
 
-/// 深空底 + 三处极光辉光，对应 PWA / 安卓的 bg_glow
+/// ??? + ??????,?? PWA / ??? bg_glow
+///
+/// ?? ??? GeometryReader ???
+/// ??????? 620pt ???? ZStack,? **ZStack ??????????**,
+/// ????????? 620pt ?(iPhone ???? 393pt),????????
+/// GeometryReader ?????????????????????,????????
 struct GlowBackground: View {
     var body: some View {
-        ZStack {
-            AppColor.bg
-            glow(AppColor.brand.opacity(0.18), size: 620)
-                .offset(x: -170, y: -240)
-            glow(AppColor.accent2.opacity(0.15), size: 560)
-                .offset(x: 200, y: -300)
-            glow(AppColor.warn.opacity(0.08), size: 480)
-                .offset(x: -40, y: 340)
+        GeometryReader { geo in
+            ZStack {
+                AppColor.bg
+                glow(AppColor.brand.opacity(0.18), size: 620)
+                    .position(x: geo.size.width * 0.12, y: geo.size.height * 0.10)
+                glow(AppColor.accent2.opacity(0.15), size: 560)
+                    .position(x: geo.size.width * 0.98, y: geo.size.height * 0.06)
+                glow(AppColor.warn.opacity(0.08), size: 480)
+                    .position(x: geo.size.width * 0.28, y: geo.size.height * 0.92)
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .clipped()
         }
-        .ignoresSafeArea()
     }
 
     private func glow(_ color: Color, size: CGFloat) -> some View {
@@ -26,10 +34,11 @@ struct GlowBackground: View {
                                  endRadius: size / 2))
             .frame(width: size, height: size)
             .blur(radius: 20)
+            .allowsHitTesting(false)
     }
 }
 
-/// 玻璃卡片
+/// ????
 struct GlassCard<Content: View>: View {
     var padding: CGFloat = 16
     var radius: CGFloat = 22
@@ -51,7 +60,7 @@ struct GlassCard<Content: View>: View {
     }
 }
 
-/// 青色渐变主按钮
+/// ???????
 struct PrimaryButton: View {
     let label: String
     let action: () -> Void
@@ -73,7 +82,7 @@ struct PrimaryButton: View {
     }
 }
 
-/// 次级按钮
+/// ????
 struct GhostButton: View {
     let label: String
     let action: () -> Void
@@ -98,7 +107,7 @@ struct GhostButton: View {
     }
 }
 
-/// 小写间距拉开的 kicker
+/// ??????? kicker
 struct Kicker: View {
     let text: String
     var body: some View {

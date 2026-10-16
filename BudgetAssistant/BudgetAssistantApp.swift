@@ -13,21 +13,23 @@ struct BudgetAssistantApp: App {
     }
 }
 
-/// 首次设置 / 入口页 二选一
+/// ???? / ??? ???
+///
+/// ?? ????? ZStack ?(ZStack ????????????,
+/// ?????????????)?? .background() -- ?????????????
 struct RootView: View {
     @EnvironmentObject var store: BudgetStore
 
     var body: some View {
-        ZStack {
-            GlowBackground()
+        Group {
             if store.configured {
                 HomeView()
-                    .transition(.opacity)
             } else {
                 SetupView()
-                    .transition(.opacity)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(GlowBackground().ignoresSafeArea())
         .animation(.easeInOut(duration: 0.35), value: store.configured)
     }
 }

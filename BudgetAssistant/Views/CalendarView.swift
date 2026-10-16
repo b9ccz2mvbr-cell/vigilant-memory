@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// 规格 5.6 日历视图
+/// ?? 5.6 ????
 struct CalendarView: View {
     @EnvironmentObject var store: BudgetStore
     @Environment(\.dismiss) private var dismiss
 
     enum Scope: String, CaseIterable {
-        case all = "合计", daily = "日常", other = "其他"
+        case all = "??", daily = "??", other = "??"
     }
 
     @State private var year: Int = Calendar.current.component(.year, from: Date())
@@ -14,7 +14,7 @@ struct CalendarView: View {
     @State private var scope: Scope = .all
     @State private var selectedDay: DaySelection?
 
-    private let weekdays = ["一", "二", "三", "四", "五", "六", "日"]
+    private let weekdays = ["?", "?", "?", "?", "?", "?", "?"]
 
     private var byDay: [Date: (daily: Double, other: Double, list: [BudgetRecord])] {
         store.groupByDay()
@@ -33,7 +33,7 @@ struct CalendarView: View {
                     grid.padding(.top, 4)
                     summary.padding(.top, 18)
 
-                    Text("点某一天 → 看当天两个板块各花了多少。")
+                    Text("???? ? ?????????????")
                         .font(.system(size: 12))
                         .foregroundStyle(AppColor.ink3)
                         .padding(.top, 16)
@@ -41,12 +41,12 @@ struct CalendarView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 30)
             }
-            .background(GlowBackground())
-            .navigationTitle("日历")
+            .background(GlowBackground().ignoresSafeArea())
+            .navigationTitle("??")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("关闭") { dismiss() }
+                    Button("??") { dismiss() }
                         .foregroundStyle(AppColor.brand)
                 }
             }
@@ -59,17 +59,17 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: - 月份标题
+    // MARK: - ????
 
     private var monthHeader: some View {
         HStack {
-            navButton("‹") { shift(-1) }
+            navButton("<") { shift(-1) }
             Spacer()
-            Text("\(year) 年 \(month) 月")
+            Text("\(year) ? \(month) ?")
                 .font(.system(size: 19, weight: .bold))
                 .foregroundStyle(AppColor.ink)
             Spacer()
-            navButton("›") { shift(1) }
+            navButton(">") { shift(1) }
         }
     }
 
@@ -94,7 +94,7 @@ struct CalendarView: View {
         year = y
     }
 
-    // MARK: - 口径切换
+    // MARK: - ????
 
     private var scopePicker: some View {
         HStack(spacing: 6) {
@@ -127,13 +127,13 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: - 图例
+    // MARK: - ??
 
     private var legend: some View {
         HStack(spacing: 12) {
-            legendItem(AppColor.brand.opacity(0.45), "未超支", circle: false)
-            legendItem(AppColor.danger, "日常超支", circle: false)
-            legendItem(AppColor.accent2, "有其他支出", circle: true)
+            legendItem(AppColor.brand.opacity(0.45), "???", circle: false)
+            legendItem(AppColor.danger, "????", circle: false)
+            legendItem(AppColor.accent2, "?????", circle: true)
             Spacer()
         }
     }
@@ -164,13 +164,13 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: - 网格
+    // MARK: - ??
 
     private var grid: some View {
         let cal = Calendar.current
         let firstOfMonth = cal.date(from: DateComponents(year: year, month: month, day: 1))!
         let daysInMonth = cal.range(of: .day, in: .month, for: firstOfMonth)!.count
-        // 周一为一周起点
+        // ???????
         let weekday = cal.component(.weekday, from: firstOfMonth) // 1=Sun
         let lead = (weekday + 5) % 7
         let todayKey = BudgetClock.dayStart(Date())
@@ -231,7 +231,7 @@ struct CalendarView: View {
         }
     }
 
-    // MARK: - 月度概览
+    // MARK: - ????
 
     private var summary: some View {
         let cal = Calendar.current
@@ -256,12 +256,12 @@ struct CalendarView: View {
         return GlassCard {
             VStack(spacing: 13) {
                 HStack(spacing: 10) {
-                    kv("本月已花", Money.format(spent), .normal)
-                    kv("月度总额", Money.format(quota), .normal)
+                    kv("????", Money.format(spent), .normal)
+                    kv("????", Money.format(quota), .normal)
                 }
                 HStack(spacing: 10) {
-                    kv("结余", Money.format(left), left < 0 ? .negative : .normal)
-                    kv("超支 / 未用完", "\(over) / \(under) 天", .normal)
+                    kv("??", Money.format(left), left < 0 ? .negative : .normal)
+                    kv("?? / ???", "\(over) / \(under) ?", .normal)
                 }
             }
         }
@@ -284,8 +284,8 @@ struct CalendarView: View {
     }
 }
 
-/// 让选中的某天能驱动 .sheet(item:)
-/// （不改 Date 本身，避免 Swift 版本差异导致 @retroactive 不可用）
+/// ????????? .sheet(item:)
+/// (?? Date ??,?? Swift ?????? @retroactive ???)
 struct DaySelection: Identifiable {
     let key: Date
     var id: Double { key.timeIntervalSince1970 }
