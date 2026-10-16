@@ -17,6 +17,8 @@ struct CalcSheet: View {
     @State private var pinned = false
     @State private var input = ""
     @State private var toast: String?
+    @State private var showBigConfirm = false
+    @State private var pendingStatus: RecordStatus = .bought
 
     // 其他池的附加信息
     @State private var category: String?
@@ -64,6 +66,12 @@ struct CalcSheet: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: toast)
+        .alert("大额消费提醒", isPresented: $showBigConfirm) {
+            Button("取消", role: .cancel) {}
+            Button("确认记上") { doCommit(pendingStatus) }
+        } message: {
+            Text("单笔 \(Money.format(amount))，超过了 ¥200。确认要记吗？")
+        }
         .onAppear {
             pool = initialPool ?? .daily
             pinned = initialPool != nil
@@ -393,6 +401,16 @@ struct CalcSheet: View {
             return
         }
 
+        // 单笔大额（其他池 > ¥200）：先确认一下，别手滑
+        if pool == .other, status == .bought, Alerts.isSingleOtherAlarming(amount) {
+            pendingStatus = status
+            showBigConfirm = true
+            return
+        }
+        doCommit(status)
+    }
+
+    private func doCommit(_ status: RecordStatus) {
         var cat: String? = nil
         if pool == .other, let c = category {
             if CategoryStore.isManualEntry(c) {

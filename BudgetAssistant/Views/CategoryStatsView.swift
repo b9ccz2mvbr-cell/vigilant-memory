@@ -30,10 +30,15 @@ struct CategoryStatsView: View {
                     DonutChart(
                         slices: totals.map { DonutChart.Slice(label: $0.category, value: $0.total) },
                         centerText: Money.format(sum),
-                        centerSub: "\(scope.label)合计"
+                        centerSub: "其他池 · \(scope.label)"
                     )
                     .frame(height: 260)
                     .padding(.top, 4)
+
+                    // 只有其他池有分类，日常没有 —— 必须写明，否则会被读成"全部消费的分类"
+                    Text("只统计「其他支出池」里已分类的记录，不含日常开支。")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppColor.ink3)
 
                     HStack {
                         Text("其他池合计")
@@ -69,7 +74,7 @@ struct CategoryStatsView: View {
                 .padding(.top, 8)
             }
         }
-        .navigationTitle("分类支出")
+        .navigationTitle("其他支出分类")
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -77,7 +82,7 @@ struct CategoryStatsView: View {
 
     private var header: some View {
         HStack {
-            Text("分类支出")
+            Text("其他支出分类")
                 .font(.system(size: 22, weight: .heavy))
                 .foregroundStyle(AppColor.ink)
             Spacer()

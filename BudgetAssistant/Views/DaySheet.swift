@@ -7,6 +7,9 @@ struct DaySheet: View {
 
     let dayKey: Date
 
+    /// 待删除的记录（弹确认框用）
+    @State private var pendingDelete: BudgetRecord?
+
     private var entry: (daily: Double, other: Double, list: [BudgetRecord]) {
         store.groupByDay()[dayKey] ?? (0, 0, [])
     }
@@ -174,10 +177,34 @@ struct DaySheet: View {
             Text("\(held ? "忍住 " : "")\(Money.format(r.amount))")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(held ? AppColor.brand : AppColor.ink)
+
+            // 已记上的消费可以删掉
+            Button {
+                pendingDelete = r
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 12))
+                    .foregroundStyle(AppColor.ink3)
+                    .padding(.leading, 12)
+                    .padding(.vertical, 6)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.vertical, 10)
         .overlay(alignment: .bottom) {
             Rectangle().fill(AppColor.line).frame(height: 1)
+        }
+        .alert("删除这条记录？", isPresented: Binding(
+            get: { pendingDelete?.id == r.id },
+            set: { if !$0 { pendingDelete = nil } }
+        )) {
+            Button("取消", role: .cancel) { pendingDelete = nil }
+            Button("删除", role: .destructive) {
+                store.deleteRecord(id: r.id)   // 内部会连带删掉图片文件
+                pendingDelete = nil
+            }
+        } message: {
+            Text("\(r.pool.label) · \(r.status.label) · \(Money.format(r.amount))\n删除后不可恢复。")
         }
     }
 }

@@ -38,20 +38,21 @@ struct HomeView: View {
                     }
                     .padding(.top, 20)
 
-                    if snap.globalOverspent {
-                        Text("两池合计已超月度总额")
+                    // 月度总消费预警：60% 提醒、80% 警示、100% 超支
+                    if let banner = monthBanner(snap) {
+                        Text(banner.text)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Color(hex: 0xFFC9C9))
+                            .foregroundStyle(banner.ink)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 11)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(AppColor.danger.opacity(0.12))
+                                    .fill(banner.color.opacity(0.12))
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .stroke(AppColor.danger.opacity(0.35), lineWidth: 1)
+                                    .stroke(banner.color.opacity(0.35), lineWidth: 1)
                             )
                             .padding(.top, 14)
                     }
@@ -71,7 +72,7 @@ struct HomeView: View {
                 entryRow(title: "日历", hint: "看每天花了多少 ›") { showCalendar = true }
                     .padding(.top, 22)
 
-                entryRow(title: "分类支出", hint: "日度 / 月度 / 年度占比 ›") { showStats = true }
+                entryRow(title: "其他支出分类", hint: "日度 / 月度 / 年度占比 ›") { showStats = true }
                     .padding(.top, 10)
 
                 entryRow(title: "调整额度", hint: "改月度总额 / 单日预算 ›") { showSettings = true }
@@ -124,6 +125,40 @@ struct HomeView: View {
             Button("清空", role: .destructive) { store.clearAll() }
         } message: {
             Text("确定清空全部数据？此操作不可撤销。")
+        }
+    }
+
+    // MARK: - 月度预警横幅
+
+    private struct MonthBanner {
+        let text: String
+        let color: Color
+        let ink: Color
+    }
+
+    /// 月度总消费预警：60% 提醒、80% 警示、100% 超支
+    private func monthBanner(_ snap: Snapshot) -> MonthBanner? {
+        let spent = snap.daily.spent + snap.other.spent
+        let total = snap.monthlyTotal
+        let level = Alerts.monthLevel(spent: spent, monthlyTotal: total)
+        let pct = Int((Alerts.monthRatio(spent: spent, monthlyTotal: total) * 100).rounded())
+        let left = max(0, total - spent)
+
+        switch level {
+        case .none:
+            return nil
+        case .watch:
+            return MonthBanner(text: "月度总消费已用 \(pct)%，还剩 \(Money.format(left))",
+                               color: AppColor.warn,
+                               ink: AppColor.warn)
+        case .warn:
+            return MonthBanner(text: "月度总消费已用 \(pct)%，只剩 \(Money.format(left)) 了",
+                               color: AppColor.danger,
+                               ink: Color(hex: 0xFFC9C9))
+        case .over:
+            return MonthBanner(text: "月度总消费已超支 \(Money.format(max(0, spent - total)))",
+                               color: AppColor.danger,
+                               ink: Color(hex: 0xFFC9C9))
         }
     }
 
