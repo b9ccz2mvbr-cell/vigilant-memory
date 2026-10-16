@@ -13,6 +13,11 @@ name: Build unsigned IPA
 
 on:
   workflow_dispatch:
+    inputs:
+      app_only:
+        description: '只编译主 App（跳过桌面小组件）—— 第一次编译建议勾上'
+        type: boolean
+        default: false
   push:
     branches: [main, master]
 
@@ -36,7 +41,15 @@ jobs:
         run: brew install xcodegen
 
       - name: 生成 Xcode 工程
-        run: xcodegen generate
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.app_only }}" = "true" ]; then
+            echo "==> 已勾选「只编译主 App」，先移除小组件 target"
+            python3 scripts/strip_widget.py project.yml
+          else
+            echo "==> 完整编译（含桌面小组件）"
+          fi
+          xcodegen generate
 
       - name: 编译（不签名）
         run: |
