@@ -69,7 +69,9 @@ struct CalcSheet: View {
             pinned = initialPool != nil
             if pool == .other { category = nil }
         }
-        .onChange(of: photoItem) { _, newValue in
+        // 用 iOS 16 兼容的单参数版 onChange：
+        // 两参数的 onChange(of:initial:_:) 要 iOS 17，而本 App 部署目标是 16.4。
+        .onChange(of: photoItem) { newValue in
             guard let newValue else { return }
             Task {
                 if let data = try? await newValue.loadTransferable(type: Data.self),
