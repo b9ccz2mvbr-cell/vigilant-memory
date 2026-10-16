@@ -118,6 +118,34 @@ final class BudgetStore: ObservableObject {
         }
     }
 
+    /// 按分类聚合（从多到少），给统计页的环形图和明细列表用。
+    /// 只算**其他池 + 已买 + 有分类**的记录 —— 和记账时的口径一致。
+    func categoryTotals(from: Date, to: Date) -> [(category: String, total: Double)] {
+        var acc: [String: Double] = [:]
+        for r in records {
+            guard r.pool == .other, r.status == .bought else { continue }
+            guard let c = r.category, !c.isEmpty else { continue }
+            guard r.ts >= from, r.ts < to else { continue }
+            acc[c, default: 0] += r.amount
+        }
+        return acc.map { (category: $0.key, total: $0.value) }
+            .sorted { $0.total > $1.total }
+    }
+
+    /// 统计页的时间范围
+    func range(_ scope: StatScope, at date: Date = Date()) -> (from: Date, to: Date) {
+        let anchor = config?.monthStartDay ?? 1
+        switch scope {
+        case .day:
+            return (BudgetClock.dayStart(date), BudgetClock.dayEnd(date))
+        case .month:
+            return (BudgetClock.periodStart(date, monthStartDay: anchor),
+                    BudgetClock.periodEnd(date, monthStartDay: anchor))
+        case .year:
+            return (BudgetClock.yearStart(date), BudgetClock.yearEnd(date))
+        }
+    }
+
     func clearAll() {
         // 先删图片再清数据
         for name in records.compactMap({ $0.imageFile }) {

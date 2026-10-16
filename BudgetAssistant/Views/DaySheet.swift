@@ -150,10 +150,26 @@ struct DaySheet: View {
         let f = DateFormatter()
         f.dateFormat = "HH:mm"
         let held = r.status == .held
-        return HStack {
-            Text("\(f.string(from: r.ts)) · \(r.status.label)")
-                .font(.system(size: 13))
-                .foregroundStyle(AppColor.ink3)
+
+        // 分类 / 备注 / 有图 —— 这就是分类归档到日历的落点
+        var tags: [String] = []
+        if let c = r.category, !c.isEmpty { tags.append(c) }
+        if let n = r.note, !n.isEmpty { tags.append(n) }
+        if let img = r.imageFile, !img.isEmpty { tags.append("有图") }
+
+        return HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("\(f.string(from: r.ts)) · \(r.status.label)")
+                    .font(.system(size: 13))
+                    .foregroundStyle(AppColor.ink3)
+                if !tags.isEmpty {
+                    Text(tags.joined(separator: "  ·  "))
+                        .font(.system(size: 12))
+                        .foregroundStyle(held ? AppColor.ink3 : AppColor.brand)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
             Spacer()
             Text("\(held ? "忍住 " : "")\(Money.format(r.amount))")
                 .font(.system(size: 13, weight: .bold))

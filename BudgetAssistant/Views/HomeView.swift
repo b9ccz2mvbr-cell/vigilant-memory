@@ -6,6 +6,7 @@ struct HomeView: View {
 
     @State private var calcPool: Pool?
     @State private var showCalendar = false
+    @State private var showStats = false
     @State private var showSettings = false
     @State private var showGuide = false
     @State private var confirmClear = false
@@ -70,6 +71,9 @@ struct HomeView: View {
                 entryRow(title: "日历", hint: "看每天花了多少 ›") { showCalendar = true }
                     .padding(.top, 22)
 
+                entryRow(title: "分类支出", hint: "日度 / 月度 / 年度占比 ›") { showStats = true }
+                    .padding(.top, 10)
+
                 entryRow(title: "调整额度", hint: "改月度总额 / 单日预算 ›") { showSettings = true }
                     .padding(.top, 10)
 
@@ -92,6 +96,14 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showCalendar) {
             CalendarView().environmentObject(store)
+        }
+        .sheet(isPresented: $showStats) {
+            NavigationStack {
+                CategoryStatsView().environmentObject(store)
+            }
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+            .presentationBackground(.clear)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()

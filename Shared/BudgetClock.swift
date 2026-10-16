@@ -69,4 +69,36 @@ enum BudgetClock {
         let days = c.dateComponents([.day], from: from, to: to).day ?? 1
         return max(1, days)
     }
+
+    // MARK: - 年度口径（统计页的「年度」用）
+
+    /// 该时刻所属「预算年」的起点：当年 1 月 1 日的 4:00
+    static func yearStart(_ date: Date) -> Date {
+        let c = cal
+        let boundary = dayStart(date)
+        var comps = c.dateComponents([.year], from: boundary)
+        comps.month = 1
+        comps.day = 1
+        comps.hour = dayStartHour
+        comps.minute = 0
+        comps.second = 0
+        return c.date(from: comps) ?? boundary
+    }
+
+    /// 年度终点（次年 1 月 1 日 4:00），左闭右开
+    static func yearEnd(_ date: Date) -> Date {
+        cal.date(byAdding: .year, value: 1, to: yearStart(date)) ?? date
+    }
+}
+
+/// 统计页的时间范围。日度用 4:00 日界，月度按配置的每月起始日，年度按自然年。
+///
+/// 三者都走 BudgetClock —— **同一笔钱在哪儿都归同一天**。
+enum StatScope: String, CaseIterable, Identifiable {
+    case day = "日度"
+    case month = "月度"
+    case year = "年度"
+
+    var id: String { rawValue }
+    var label: String { rawValue }
 }
