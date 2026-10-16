@@ -1,14 +1,14 @@
 import SwiftUI
 
-// ????? Shared/AppPalette.swift -- ????????,
-// ???? target ???????
+// 配色定义在 Shared/AppPalette.swift —— 小组件扩展也要用，
+// 而小组件 target 不包含本文件。
 
-/// ??? + ??????,?? PWA / ??? bg_glow
+/// 深空底 + 三处极光辉光，对应 PWA / 安卓的 bg_glow
 ///
-/// ?? ??? GeometryReader ???
-/// ??????? 620pt ???? ZStack,? **ZStack ??????????**,
-/// ????????? 620pt ?(iPhone ???? 393pt),????????
-/// GeometryReader ?????????????????????,????????
+/// ⚠️ 必须用 GeometryReader 包住。
+/// 早期版本直接把 620pt 的圆放进 ZStack，而 **ZStack 会按最大的子视图撑开**，
+/// 于是整个界面被撑到 620pt 宽（iPhone 屏幕只有 393pt），内容左右被切掉。
+/// GeometryReader 只接受外部给的尺寸、不把子视图尺寸向上传递，所以撑不破布局。
 struct GlowBackground: View {
     var body: some View {
         GeometryReader { geo in
@@ -38,7 +38,7 @@ struct GlowBackground: View {
     }
 }
 
-/// ????
+/// 玻璃卡片
 struct GlassCard<Content: View>: View {
     var padding: CGFloat = 16
     var radius: CGFloat = 22
@@ -60,7 +60,7 @@ struct GlassCard<Content: View>: View {
     }
 }
 
-/// ???????
+/// 青色渐变主按钮
 struct PrimaryButton: View {
     let label: String
     let action: () -> Void
@@ -82,7 +82,7 @@ struct PrimaryButton: View {
     }
 }
 
-/// ????
+/// 次级按钮
 struct GhostButton: View {
     let label: String
     let action: () -> Void
@@ -107,7 +107,7 @@ struct GhostButton: View {
     }
 }
 
-/// ??????? kicker
+/// 小写间距拉开的 kicker
 struct Kicker: View {
     let text: String
     var body: some View {
