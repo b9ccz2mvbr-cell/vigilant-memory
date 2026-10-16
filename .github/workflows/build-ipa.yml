@@ -66,6 +66,28 @@ jobs:
             CODE_SIGN_ENTITLEMENTS="" \
             build
 
+      - name: 检查产物的 Info.plist（诊断）
+        run: |
+          set -uo pipefail
+          APP="build/Build/Products/Release-iphoneos/BudgetAssistant.app"
+          echo "=========== 主 App ==========="
+          echo "--- CFBundlePackageType ---"
+          /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$APP/Info.plist" 2>&1 || true
+          echo "=========== PlugIns ==========="
+          ls -la "$APP/PlugIns" 2>&1 || echo "(没有 PlugIns)"
+          APPEX="$APP/PlugIns/BudgetWidget.appex"
+          if [ -d "$APPEX" ]; then
+            echo "=========== 小组件 Info.plist 原文 ==========="
+            cat "$APPEX/Info.plist" 2>&1 || true
+            echo ""
+            echo "--- CFBundlePackageType ---"
+            /usr/libexec/PlistBuddy -c "Print :CFBundlePackageType" "$APPEX/Info.plist" 2>&1 || true
+            echo "--- NSExtensionPointIdentifier ---"
+            /usr/libexec/PlistBuddy -c "Print :NSExtension:NSExtensionPointIdentifier" "$APPEX/Info.plist" 2>&1 || true
+          else
+            echo "!! 找不到 BudgetWidget.appex"
+          fi
+
       - name: 打包成 .ipa
         run: |
           set -euo pipefail
