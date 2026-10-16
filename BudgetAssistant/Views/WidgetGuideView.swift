@@ -16,6 +16,7 @@ struct WidgetGuideView: View {
     @State private var message: String?
     @State private var isError = false
     @State private var refreshTimer: Timer?
+    @State private var diag = EntitlementInspector.inspect()
 
     var body: some View {
         NavigationStack {
@@ -71,6 +72,51 @@ struct WidgetGuideView: View {
                             Text("锁屏上的那张卡片也有同样的按钮。")
                                 .font(.system(size: 12))
                                 .foregroundStyle(AppColor.ink3)
+                        }
+                    }
+
+                    // ---------- 权限自检（用来定位"活动创建成功但不显示"） ----------
+                    sectionTitle("权限自检", icon: "checkmark.shield")
+
+                    GlassCard {
+                        VStack(alignment: .leading, spacing: 9) {
+                            HStack(spacing: 7) {
+                                Image(systemName: diag.hasActivityKit
+                                      ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundStyle(diag.hasActivityKit ? AppColor.brand : AppColor.danger)
+                                Text(diag.hasActivityKit
+                                     ? "描述文件包含实时活动权限"
+                                     : "描述文件缺少实时活动权限")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundStyle(diag.hasActivityKit ? AppColor.brand : AppColor.danger)
+                            }
+
+                            Text("描述文件: \(diag.profileFound ? "已找到" : "未找到")"
+                                 + (diag.teamName.map { " · 团队 \($0)" } ?? "")
+                                 + (diag.expiration.map { " · 到期 \($0.formatted(date: .abbreviated, time: .omitted))" } ?? ""))
+                                .font(.system(size: 11))
+                                .foregroundStyle(AppColor.ink3)
+
+                            if !diag.entitlements.isEmpty {
+                                DisclosureGroup {
+                                    Text(diag.rawKeys)
+                                        .font(.system(size: 10, design: .monospaced))
+                                        .foregroundStyle(AppColor.ink3)
+                                        .textSelection(.enabled)
+                                        .padding(.top, 6)
+                                } label: {
+                                    Text("查看全部 \(diag.entitlements.count) 项权限")
+                                        .font(.system(size: 11))
+                                        .foregroundStyle(AppColor.brand)
+                                }
+                                .tint(AppColor.brand)
+                            }
+
+                            Text("如果这里显示「缺少」，说明侧载工具生成的描述文件不带实时活动能力 —— "
+                                 + "活动能创建（所以显示已启动），但系统不会渲染它。")
+                                .font(.system(size: 11))
+                                .foregroundStyle(AppColor.ink3)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
 
