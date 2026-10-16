@@ -55,6 +55,9 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.budget
         GENERATE_INFOPLIST_FILE: NO
         INFOPLIST_FILE: BudgetAssistant/Info.plist
+        # 指定 App 图标（Assets.xcassets 里的 AppIcon）
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: ""
         TARGETED_DEVICE_FAMILY: "1"
         MARKETING_VERSION: "1.0"
         CURRENT_PROJECT_VERSION: "1"

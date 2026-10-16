@@ -45,6 +45,9 @@ struct BudgetWidgetView: View {
             if let snap = entry.snapshot {
                 switch family {
                 case .systemMedium: medium(snap)
+                case .accessoryCircular: accessoryCircular(snap)
+                case .accessoryRectangular: accessoryRectangular(snap)
+                case .accessoryInline: accessoryInline(snap)
                 default: small(snap)
                 }
             } else {
@@ -59,9 +62,56 @@ struct BudgetWidgetView: View {
             }
         }
         .containerBackground(for: .widget) {
-            LinearGradient(colors: [Color(hex: 0x0F1720), Color(hex: 0x0A0E14)],
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            // 锁屏小组件由系统提供背景，这里必须留空，
+            // 否则锁屏上会出现一块突兀的深色方块。
+            if family == .systemSmall || family == .systemMedium {
+                LinearGradient(colors: [Color(hex: 0x0F1720), Color(hex: 0x0A0E14)],
+                               startPoint: .topLeading, endPoint: .bottomTrailing)
+            } else {
+                Color.clear
+            }
         }
+    }
+
+    // MARK: - 锁屏小组件（iOS 16+）—— 替代安卓的悬浮球
+
+    /// 圆形：今日日常剩余
+    private func accessoryCircular(_ snap: Snapshot) -> some View {
+        Gauge(value: snap.daily.usedRatio) {
+            Text("日常")
+        } currentValueLabel: {
+            Text(Money.short(max(0, snap.daily.remaining)))
+                .font(.system(size: 13, weight: .bold))
+        }
+        .gaugeStyle(.accessoryCircular)
+        .tint(snap.daily.overspent ? AppColor.danger : AppColor.brand)
+    }
+
+    /// 长方形：两个池各一行
+    private func accessoryRectangular(_ snap: Snapshot) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            HStack(spacing: 4) {
+                Text("日常")
+                    .font(.system(size: 11, weight: .semibold))
+                Spacer()
+                Text(Money.format(snap.daily.remaining))
+                    .font(.system(size: 13, weight: .bold))
+                    .widgetAccentable()
+            }
+            HStack(spacing: 4) {
+                Text("其他")
+                    .font(.system(size: 11))
+                Spacer()
+                Text(Money.format(snap.other.remaining))
+                    .font(.system(size: 11))
+            }
+            .foregroundStyle(.secondary)
+        }
+    }
+
+    /// 单行文字：锁屏时间下方直接显示
+    private func accessoryInline(_ snap: Snapshot) -> some View {
+        Text("日常剩 \(Money.format(snap.daily.remaining))")
     }
 
     /// 2x1：今日日常剩余 + 本月其他剩余
@@ -150,8 +200,11 @@ struct BudgetWidget: Widget {
             BudgetWidgetView(entry: entry)
         }
         .configurationDisplayName("预算余额")
-        .description("今日日常剩余与本月其他剩余，一眼看到还能花多少。")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .description("桌面与锁屏都能看到今日日常剩余和本月其他剩余。")
+        .supportedFamilies([
+            .systemSmall, .systemMedium,              // 桌面
+            .accessoryCircular, .accessoryRectangular, .accessoryInline,  // 锁屏
+        ])
     }
 }
 
