@@ -80,21 +80,23 @@ struct WidgetGuideView: View {
                          + "所有 App 都一样，只能手动加一次。")
 
                     // ---------- 背部轻点 ----------
-                    sectionTitle("背部轻点（零点击记账）", icon: "hand.tap")
+                    sectionTitle("背部轻点（敲两下直接记账）", icon: "hand.tap")
 
                     GlassCard {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("配置好之后，**敲两下手机背面**就能记一笔，不用打开 App。")
+                            Text("配置好之后，**敲两下手机背面**就直接打开记账页。")
                                 .font(.system(size: 13))
                                 .foregroundStyle(AppColor.ink2)
                                 .fixedSize(horizontal: false, vertical: true)
                             Divider().overlay(AppColor.line)
-                            step(1, "打开 **设置 → 辅助功能 → 触控**")
-                            step(2, "拉到最底，点 **「轻点背面」**")
-                            step(3, "选 **「轻点两下」** → 往下找 **「快捷指令」**")
-                            step(4, "选 **「记一笔」** 或 **「打开记账」**")
+                            step(1, "打开 **「快捷指令」App** → 右上角 **+**")
+                            step(2, "添加操作 → 搜 **「打开 App」** → 选 **预算助手**，存成「记一笔」")
+                            step(3, "回 **设置 → 辅助功能 → 触控** → 拉到底点 **「轻点背面」**")
+                            step(4, "选 **「轻点两下」** → 往下找 **「快捷指令」** → 选刚才那个")
                         }
                     }
+
+                    note("用的是系统自带的「打开 App」动作，所以不需要 App 提供任何接口。")
 
                     Button {
                         openSettings()
@@ -114,8 +116,7 @@ struct WidgetGuideView: View {
                     .padding(.top, 10)
 
                     note("iOS 也不允许 App 自动把自己加进快捷指令，所以这一步要你手动配一次，"
-                         + "配完就永久生效了。")
-                }
+                         + "配完就永久生效了。")                }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 30)
             }

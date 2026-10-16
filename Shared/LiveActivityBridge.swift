@@ -44,9 +44,11 @@ enum LiveActivityBridge {
             otherRemaining: snap.other.remaining,
             updatedAt: Date()
         )
+        // iOS 16.2 起用 request(attributes:content:pushType:)，
+        // 旧的 contentState: 版本已废弃。
         _ = try Activity.request(
             attributes: attributes,
-            contentState: state,
+            content: .init(state: state, staleDate: nil),
             pushType: nil          // 本地更新，不需要推送（免费账号也能用）
         )
         isPreferred = true
@@ -64,7 +66,8 @@ enum LiveActivityBridge {
         )
         Task {
             for activity in Activity<BudgetActivityAttributes>.activities {
-                await activity.update(using: state)
+                // iOS 16.2 起用 update(_:)，旧的 update(using:) 已废弃
+                await activity.update(.init(state: state, staleDate: nil))
             }
         }
     }
@@ -95,7 +98,7 @@ enum LiveActivityBridge {
     /// 且重启手机后不会自动恢复。App 没法在后台自己续，只能在每次被打开时补上。
     static func resumeIfNeeded() {
         guard isPreferred, isEnabledBySystem, !isRunning else { return }
-        try? start()
+        _ = try? start()
     }
 }
 
