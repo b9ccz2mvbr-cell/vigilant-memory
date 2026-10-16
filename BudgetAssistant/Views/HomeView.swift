@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var calcPool: Pool?
     @State private var showCalendar = false
     @State private var showSettings = false
+    @State private var showGuide = false
     @State private var confirmClear = false
 
     var body: some View {
@@ -72,6 +73,9 @@ struct HomeView: View {
                 entryRow(title: "调整额度", hint: "改月度总额 / 单日预算 ›") { showSettings = true }
                     .padding(.top, 10)
 
+                entryRow(title: "小组件与灵动岛", hint: "灵动岛开关 · 添加引导 ›") { showGuide = true }
+                    .padding(.top, 10)
+
                 recentRecords
                     .padding(.top, 24)
             }
@@ -91,6 +95,13 @@ struct HomeView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .environmentObject(store)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(.clear)
+        }
+        .sheet(isPresented: $showGuide) {
+            WidgetGuideView()
                 .environmentObject(store)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)

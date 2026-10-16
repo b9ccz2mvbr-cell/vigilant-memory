@@ -31,5 +31,10 @@ struct RootView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(GlowBackground().ignoresSafeArea())
         .animation(.easeInOut(duration: 0.35), value: store.configured)
+        .onAppear {
+            // 灵动岛实时活动最长 8 小时会被系统结束，且重启后不会自动恢复。
+            // App 没法在后台自己续期，只能在每次被打开时补上。
+            LiveActivityBridge.resumeIfNeeded()
+        }
     }
 }

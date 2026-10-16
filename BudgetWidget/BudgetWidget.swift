@@ -212,5 +212,6 @@ struct BudgetWidget: Widget {
 struct BudgetWidgetBundle: WidgetBundle {
     var body: some Widget {
         BudgetWidget()
+        BudgetLiveActivity()   // 灵动岛 / 锁屏实时活动
     }
 }

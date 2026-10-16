@@ -90,6 +90,8 @@ final class BudgetStore: ObservableObject {
         #if canImport(WidgetKit)
         WidgetCenter.shared.reloadAllTimelines()
         #endif
+        // 记完一笔顺手刷新灵动岛 / 锁屏实时活动
+        LiveActivityBridge.update()
     }
 
     // MARK: - 双池计算
