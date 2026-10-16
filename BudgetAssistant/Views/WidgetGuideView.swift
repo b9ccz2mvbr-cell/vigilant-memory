@@ -59,6 +59,21 @@ struct WidgetGuideView: View {
                     note("⚠️ iOS 的限制：实时活动**最长 8 小时**，之后系统会自动移除；"
                          + "我把它做成了「每次打开 App 自动续期」，所以你每天用的时候它都会在。")
 
+                    GlassCard {
+                        VStack(alignment: .leading, spacing: 9) {
+                            Text("怎么用")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(AppColor.ink)
+                            step(1, "**轻点**灵动岛 → 打开 App")
+                            step(2, "**长按**灵动岛 → 展开小面板（划是不行的，苹果只认长按）")
+                            step(3, "面板里点 **+10 / +20 / +50** → 直接从日常池记一笔，不用打开 App")
+                            Divider().overlay(AppColor.line)
+                            Text("锁屏上的那张卡片也有同样的按钮。")
+                                .font(.system(size: 12))
+                                .foregroundStyle(AppColor.ink3)
+                        }
+                    }
+
                     // ---------- 小组件 ----------
                     sectionTitle("桌面 / 锁屏小组件", icon: "square.grid.2x2")
 

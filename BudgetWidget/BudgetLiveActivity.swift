@@ -38,12 +38,37 @@ struct BudgetLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    VStack(spacing: 6) {
+                    VStack(spacing: 7) {
                         bar(ratio: context.state.dailyUsedRatio,
                             color: context.state.dailyOverspent ? AppColor.danger : AppColor.brand)
-                        Text("额度 \(Money.format(context.state.dailyQuota)) · 打开 App 记账")
-                            .font(.system(size: 11))
-                            .foregroundStyle(AppColor.ink3)
+
+                        // 快捷按钮 —— 在这里直接记账，不用打开 App
+                        // （iOS 17+ 的 Button(intent:)，intent 定义在 Shared/QuickAddIntent.swift）
+                        HStack(spacing: 6) {
+                            quickButton(10)
+                            quickButton(20)
+                            quickButton(50)
+                            Spacer(minLength: 4)
+                            Button(intent: OpenBudgetIntent()) {
+                                Text("记账")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(AppColor.onBrand)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(Capsule().fill(AppColor.brand))
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        HStack(spacing: 4) {
+                            Text("长按可展开 · 点数字记一笔")
+                                .font(.system(size: 10))
+                                .foregroundStyle(AppColor.ink3)
+                            Spacer()
+                            Text("额度 \(Money.format(context.state.dailyQuota))")
+                                .font(.system(size: 10))
+                                .foregroundStyle(AppColor.ink3)
+                        }
                     }
                 }
             } compactLeading: {
@@ -67,26 +92,45 @@ struct BudgetLiveActivity: Widget {
 
     @ViewBuilder
     private func lockScreen(_ context: ActivityViewContext<BudgetActivityAttributes>) -> some View {
-        HStack(alignment: .center, spacing: 14) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("今日日常")
-                    .font(.system(size: 11))
-                    .foregroundStyle(AppColor.ink3)
-                Text(Money.format(context.state.dailyRemaining))
-                    .font(.system(size: 24, weight: .heavy))
-                    .foregroundStyle(context.state.dailyOverspent ? AppColor.danger : AppColor.brand)
-                bar(ratio: context.state.dailyUsedRatio,
-                    color: context.state.dailyOverspent ? AppColor.danger : AppColor.brand)
-                    .frame(width: 120)
+        VStack(spacing: 11) {
+            HStack(alignment: .center, spacing: 14) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("今日日常")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppColor.ink3)
+                    Text(Money.format(context.state.dailyRemaining))
+                        .font(.system(size: 24, weight: .heavy))
+                        .foregroundStyle(context.state.dailyOverspent ? AppColor.danger : AppColor.brand)
+                    bar(ratio: context.state.dailyUsedRatio,
+                        color: context.state.dailyOverspent ? AppColor.danger : AppColor.brand)
+                        .frame(width: 120)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text("其他")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppColor.ink3)
+                    Text(Money.format(context.state.otherRemaining))
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(AppColor.accent2)
+                }
             }
-            Spacer()
-            VStack(alignment: .trailing, spacing: 3) {
-                Text("其他")
-                    .font(.system(size: 11))
-                    .foregroundStyle(AppColor.ink3)
-                Text(Money.format(context.state.otherRemaining))
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(AppColor.accent2)
+
+            // 锁屏上也能直接记账
+            HStack(spacing: 6) {
+                quickButton(10)
+                quickButton(20)
+                quickButton(50)
+                Spacer(minLength: 4)
+                Button(intent: OpenBudgetIntent()) {
+                    Text("打开记账")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(AppColor.onBrand)
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(AppColor.brand))
+                }
+                .buttonStyle(.plain)
             }
         }
         .padding(14)
@@ -100,5 +144,19 @@ struct BudgetLiveActivity: Widget {
             }
         }
         .frame(height: 5)
+    }
+
+    /// 展开面板里的「+¥n」快捷按钮
+    private func quickButton(_ amount: Double) -> some View {
+        Button(intent: QuickAddIntent(amount: amount)) {
+            Text("+\(Int(amount))")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(AppColor.brand)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 5)
+                .background(Capsule().fill(AppColor.brand.opacity(0.16)))
+                .overlay(Capsule().stroke(AppColor.brand.opacity(0.4), lineWidth: 0.5))
+        }
+        .buttonStyle(.plain)
     }
 }
